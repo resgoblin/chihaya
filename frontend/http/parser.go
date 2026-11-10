@@ -158,26 +158,45 @@ func ParseScrape(r *http.Request, opts ParseOptions) (*bittorrent.ScrapeRequest,
 
 // requestedIP determines the IP address for a BitTorrent client request.
 func requestedIP(r *http.Request, p bittorrent.Params, opts ParseOptions) (ip net.IP, provided bool) {
-	if opts.AllowIPSpoofing {
-		if ipstr, ok := p.String("ip"); ok {
-			return net.ParseIP(ipstr), true
-		}
+    if opts.AllowIPSpoofing {
+        if ipstr, ok := p.String("ip"); ok {
+            return net.ParseIP(ipstr), true
+        }
 
-		if ipstr, ok := p.String("ipv4"); ok {
-			return net.ParseIP(ipstr), true
-		}
+        if ipstr, ok := p.String("ipv4"); ok {
+            return net.ParseIP(ipstr), true
+        }
 
-		if ipstr, ok := p.String("ipv6"); ok {
-			return net.ParseIP(ipstr), true
-		}
-	}
+        if ipstr, ok := p.String("ipv6"); ok {
+            return net.ParseIP(ipstr), true
+        }
+    }
 
-	if opts.RealIPHeader != "" {
-		if ip := r.Header.Get(opts.RealIPHeader); ip != "" {
-			return net.ParseIP(ip), false
-		}
-	}
+    slog.Info("REAL IP DEBUG",
+        slog.String("remote", r.RemoteAddr),
+        slog.String("header_name", opts.RealIPHeader),
+        slog.String("header_value", r.Header.Get(opts.RealIPHeader)),
+        slog.Bool("spoofing", opts.AllowIPSpoofing),
+    )
 
-	host, _, _ := net.SplitHostPort(r.RemoteAddr)
-	return net.ParseIP(host), false
+    if opts.RealIPHeader != "" {
+        if ip := r.Header.Get(opts.RealIPHeader); ip != "" {
+            parsedIP := net.ParseIP(ip)
+
+            slog.Info("REAL IP SELECTED",
+                slog.String("ip", ip),
+                slog.Bool("valid", parsedIP != nil),
+            )
+
+            return parsedIP, false
+        }
+    }
+
+    host, _, _ := net.SplitHostPort(r.RemoteAddr)
+
+    slog.Info("REAL IP FALLBACK",
+        slog.String("ip", host),
+    )
+
+    return net.ParseIP(host), false
 }
