@@ -261,3 +261,5 @@ require (
 	mvdan.cc/unparam v0.0.0-20251027182757-5beb8c8f8f15 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
+
+replace github.com/SermoDigital/jose => github.com/resgoblin/jose v0.0.0-20261110233300-17d8000b77a2
