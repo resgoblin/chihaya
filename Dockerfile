@@ -16,7 +16,9 @@ RUN go mod download
 COPY . .
 
 # Compile Chihaya.
-RUN CGO_ENABLED=0 go install ./cmd/chihaya
+RUN go mod tidy
+RUN go mod download
+RUN CGO_ENABLED=0 go install -v ./cmd/chihaya
 
 FROM alpine:latest
 
