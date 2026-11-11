@@ -1,4 +1,6 @@
+
 name: "Build & Test"
+
 on:
   workflow_dispatch:
   push:
@@ -8,17 +10,21 @@ on:
   pull_request:
     branches:
       - "*"
+
 jobs:
   build:
     name: "Build Binary"
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v7.0.0
-      - uses: "actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c" # v6.4.0
+      - uses: "actions/checkout@v4"
+
+      - uses: "actions/setup-go@v6"
         with:
           go-version-file: "go.mod"
+
       - name: "Download Go dependencies"
         run: "go mod tidy"
+
       - name: "Run Go Build"
         run: "VERBOSE=1 make build"
 
@@ -29,10 +35,9 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0"
+      - uses: "actions/checkout@v4"
 
-      - name: "Set up Docker Buildx"
-        uses: "docker/setup-buildx-action@v3"
+      - uses: "docker/setup-buildx-action@v3"
 
       - name: "Login to GitHub Container Registry"
         uses: "docker/login-action@v3"
@@ -54,29 +59,43 @@ jobs:
     name: "Run Unit Tests"
     runs-on: "ubuntu-latest"
     steps:
-      - uses: "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0" # v7.0.0
-      - uses: "actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c" # v6.4.0
+      - uses: "actions/checkout@v4"
+
+      - uses: "actions/setup-go@v6"
         with:
           go-version-file: "go.mod"
+
       - name: "Download Go dependencies"
         run: "go mod tidy"
+
+      - name: "Run Go Test"
+        run: "VERBOSE=1 make test-unit"
+
   e2e:
     name: "E2E Tests"
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      - uses: "actions/checkout@v4"
+
+      - uses: "actions/setup-go@v6"
         with:
-          go-version-file: go.mod
+          go-version-file: "go.mod"
+
+      - name: "Download Go dependencies"
+        run: "go mod tidy"
+
       - name: "Install redis"
-        run: "sudo apt-get update && sudo apt-get install redis"
+        run: "sudo apt-get update && sudo apt-get install -y redis"
+
       - name: "Run end-to-end tests"
         run: "make test-e2e"
+
   helm:
     name: "Helm Template"
     runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: "actions/checkout@v4"
+
       - name: "Install Helm"
         uses: "engineerd/configurator@v0.0.5"
         with:
@@ -87,5 +106,6 @@ jobs:
           version: "^v3"
           urlTemplate: "https://get.helm.sh/helm-{{version}}-linux-amd64.tar.gz"
           token: "${{ secrets.GITHUB_TOKEN }}"
-      - name: "Run `helm template`"
+
+      - name: "Run Helm Template"
         run: "make test-helm"
